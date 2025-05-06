@@ -1,0 +1,67 @@
+{
+  "specversion": "0.5",
+  "registryid": "CloudEvents",
+  "self": "#/",
+  "xid": "/",
+  "epoch": 1,
+  "name": "CloudEvents Registry",
+  "description": "An impl of the CloudEvents xReg spec",
+  "documentation": "https://github.com/duglin/xreg-github",
+  "createdat": "2025-02-27T12:52:48.703439224Z",
+  "modifiedat": "2025-02-27T12:52:48.703439224Z",
+
+  "schemagroupsurl": "#/schemagroups",
+  "schemagroups": {
+    "g1": {
+      "schemagroupid": "g1",
+      "self": "#/schemagroups/g1",
+      "xid": "/schemagroups/g1",
+      "epoch": 1,
+      "createdat": "2025-02-27T12:52:48.728291165Z",
+      "modifiedat": "2025-02-27T12:52:48.728291165Z",
+      "format": "text",
+
+      "schemasurl": "#/schemagroups/g1/schemas",
+      "schemas": {
+        "popped": {
+          "schemaid": "popped",
+          "self": "#/schemagroups/g1/schemas/popped",
+          "xid": "/schemagroups/g1/schemas/popped",
+
+          "metaurl": "#/schemagroups/g1/schemas/popped/meta",
+          "meta": {
+            "schemaid": "popped",
+            "self": "#/schemagroups/g1/schemas/popped/meta",
+            "xid": "/schemagroups/g1/schemas/popped/meta",
+            "epoch": 1,
+            "createdat": "2025-02-27T12:52:48.728291165Z",
+            "modifiedat": "2025-02-27T12:52:48.728291165Z",
+            "readonly": false,
+            "compatibility": "none",
+
+            "defaultversionid": "v2.0",
+            "defaultversionurl": "#/schemagroups/g1/schemas/popped/versions/v2.0",
+            "defaultversionsticky": false
+          },
+          "versionsurl": "#/schemagroups/g1/schemas/popped/versions",
+          "versions": {
+            "v1.0": {
+              "schemaid": "popped",
+              "versionid": "v1.0",
+              "self": "#/schemagroups/g1/schemas/popped/versions/v1.0",
+              "xid": "/schemagroups/g1/schemas/popped/versions/v1.0",
+              "epoch": 1,
+              "isdefault": false,
+              "createdat": "2025-02-27T12:52:48.728291165Z",
+              "modifiedat": "2025-02-27T12:52:48.728291165Z",
+              "format": "text"
+            }
+          },
+          "versionscount": 1
+        }
+      },
+      "schemascount": 1
+    }
+  },
+  "schemagroupscount": 1
+}

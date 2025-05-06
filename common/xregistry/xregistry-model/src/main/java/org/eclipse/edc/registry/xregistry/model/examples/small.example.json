@@ -1,0 +1,31 @@
+{
+  "specversion": "0.5",
+  "type1groups": {
+    "Fabrikam.Type1": {
+      "entries": {
+        "key": {
+          "defaultversionid": "1",
+          "versions": {
+            "1": {
+              "format": "Avro/1.11.1"
+            }
+          }
+        }
+      }
+    }
+  },
+  "type2groups": {
+    "Fabrikam.Type2": {
+      "entries": {
+        "key": {
+          "defaultversionid": "1",
+          "versions": {
+            "1": {
+              "format": "Avro/1.11.1"
+            }
+          }
+        }
+      }
+    }
+  }
+}
