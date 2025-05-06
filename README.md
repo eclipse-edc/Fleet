@@ -7,7 +7,7 @@ This repository contains components implementing an EDC Registry:
 
 > :warning: This codebase is under active development and is not yet ready for production use.
  
-Build an run the xRegistry server:
+Build and run the xRegistry server:
 
 ```
 ./gradlew clean shadowJar
