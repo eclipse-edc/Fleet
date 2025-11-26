@@ -1,0 +1,107 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$description": "Requires a permission with action use have a headquarters in Europe",
+  "type": "object",
+  "properties": {
+    "policy": {
+      "type": "object",
+      "properties": {
+        "permission": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "action": {
+                "type": "string"
+              },
+              "constraint": {
+                "oneOf": [
+                  {
+                    "$ref": "#/definitions/singleConstraint"
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/definitions/singleConstraint"
+                    }
+                  }
+                ]
+              }
+            },
+            "if": {
+              "properties": {
+                "action": {
+                  "const": "use"
+                }
+              }
+            },
+            "then": {
+              "anyOf": [
+                {
+                  "properties": {
+                    "constraint": {
+                      "allOf": [
+                        {
+                          "properties": {
+                            "leftOperand": {
+                              "const": "headquarter_location"
+                            },
+                            "rightOperand": {
+                              "const": "EU"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "constraint": {
+                      "type": "array",
+                      "contains": {
+                        "properties": {
+                          "leftOperand": {
+                            "const": "membership.credential"
+                          },
+                          "rightOperand": {
+                            "const": "active"
+                          }
+                        },
+                        "required": [
+                          "leftOperand",
+                          "rightOperand"
+                        ]
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "singleConstraint": {
+      "type": "object",
+      "properties": {
+        "leftOperand": {
+          "type": "string"
+        },
+        "operator": {
+          "type": "string"
+        },
+        "rightOperand": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "leftOperand",
+        "operator",
+        "rightOperand"
+      ]
+    }
+  }
+}

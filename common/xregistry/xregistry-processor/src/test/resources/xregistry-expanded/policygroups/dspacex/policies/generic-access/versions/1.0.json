@@ -1,0 +1,24 @@
+{
+  "policyid": "generic.access",
+  "versionid": "1.0",
+  "description" : "Base policy that requires the consumer to be a member of Dataspace-X",
+  "policydefinition": {
+    "@context": {
+      "edc": "https://w3id.org/edc/v0.0.1/ns/"
+    },
+    "@type": "PolicyDefinition",
+    "policy": {
+      "@id": "9b3dd38c-84bf-52cc-9b35-9127a3b95adz",
+      "permission": [
+        {
+          "action": "use",
+          "constraint": {
+            "leftOperand": "membership.credential",
+            "operator": "eq",
+            "rightOperand": "active"
+          }
+        }
+      ]
+    }
+  }
+}

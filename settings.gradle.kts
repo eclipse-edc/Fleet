@@ -26,6 +26,7 @@ include(":common:xregistry:xregistry-model")
 include(":common:xregistry:xregistry-lib")
 include(":common:xregistry:xregistry-policy")
 include(":common:xregistry:xregistry-schema")
+include(":common:xregistry:xregistry-processor")
 
 include(":reconciler:reconciler-spi")
 include(":reconciler:reconciler-core")
@@ -36,3 +37,5 @@ include(":registry:registry-server")
 include(":registry:registry-policy")
 include(":registry:registry-policy-memory")
 include(":registry:launcher")
+
+include(":tooling:xregistry-oci-plugin")

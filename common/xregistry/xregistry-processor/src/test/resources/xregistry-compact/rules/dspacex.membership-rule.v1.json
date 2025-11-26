@@ -1,0 +1,9 @@
+{
+  "versionid": "1.0",
+  "name": "membership-requirement",
+  "description": "Requires Dataspace-X Membership Credential",
+  "appliesTo": [
+    "label:dspacex"
+  ],
+  "schemaref": "/schemas/dspace-x/membership/1.0"
+}
