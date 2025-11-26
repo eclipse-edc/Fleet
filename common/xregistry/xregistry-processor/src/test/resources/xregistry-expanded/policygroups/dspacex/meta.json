@@ -1,0 +1,11 @@
+{
+  "policygroupid": "dspacex",
+  "description": "Dspace-X policies",
+  "self": "https://localhost:8080/xregistry/policygroups/dspacex",
+  "xid": "/policygroups/dspacex",
+  "epoch": 1,
+  "createdat": "2024-12-19T06:00:00Z",
+  "modifiedat": "2024-12-19T06:00:00Z",
+  "policiesurl": "https://localhost:8080/xregistry/policygroups/dspacex/policies",
+  "policiescount": 1
+}

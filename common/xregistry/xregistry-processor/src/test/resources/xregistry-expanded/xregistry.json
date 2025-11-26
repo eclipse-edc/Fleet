@@ -1,0 +1,12 @@
+{
+  "specversion": "0.5",
+  "registryid": "sample",
+  "self": "xregistry",
+  "xid": "/xregistry",
+  "url": "xregistry",
+  "epoch": 1,
+  "createdat": "2024-12-19T06:00:00Z",
+  "modifiedat": "2024-12-19T06:00:00Z",
+  "policygroupsurl": "xregistry/policygroups",
+  "policygroupscount": 1
+}

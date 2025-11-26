@@ -47,8 +47,8 @@ public class AttributeValidator implements RegistryTypeValidator<AbstractTypeDef
     }
 
     private ValidationResult validateAttribute(Map<String, Object> entry,
-                                                                                                  AttributeDefinition attributeDefinition,
-                                                                                                  String context) {
+                                               AttributeDefinition attributeDefinition,
+                                               String context) {
         var value = entry.get(attributeDefinition.getName());
         if (value == null && mode == SERVER && attributeDefinition.serverRequired()) {
             return missingProperty(context + "." + attributeDefinition.getName());

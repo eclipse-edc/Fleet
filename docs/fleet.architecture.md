@@ -6,7 +6,7 @@ of the [Dataspace Protocol Specification (DSP)](https://github.com/eclipse-datas
 while `Connector` is used to refer to a generic implementation that may or may not be based on EDC.
 
 ## Problem Statement
-                            
+
 Organizations may control multiple Connector deployments. For example, individual divisions may run their own EDC
 instances
 using [Management Domains](https://eclipse-edc.github.io/documentation/for-adopters/distributions-deployment-operations/#management-domains).
@@ -94,31 +94,431 @@ will be an interval where changes are not applied uniformly to all deployments. 
 the reconciliation cycle. Note, however, that this is no different from a push approach, which would also be subject to
 a similar interval while all deployments are updated.
 
-### xRegistry: A Standard Approach to Extensibility
+### xRegistry and OCI: A Standard Approach to Extensibility
 
-The registry will implement the CNCF [xRegistry](https://github.com/xregistry/spec) specification. As its name implies,
-xRegistry defines an extensible data model and API for storing and retrieving resources. These resources can be schemas,
-message definitions, endpoint definitions, or other artifacts such as policies. Fleet coordination will define xRegistry
-extensions for all managed artifacts as well as provide an xRegistry implementation.
+The registry will implement
+the [Open Container Initiative Distribution Specification (OCI)](https://github.com/opencontainers/distribution-spec)
+and CNCF [xRegistry](https://github.com/xregistry/spec) specifications
+
+As its name implies, xRegistry defines an extensible data model representing resources. These resources can be schemas,
+message definitions, endpoint definitions, or other artifacts such as policies. The xRegistry specification also defines
+an optional REST API for managing resources. However, we will not use the API and instead rely on OCI to
+distribute resources.OCI defines an API for runtime artifact distribution supported by many open-source and commercial
+registry products,
+including [GitHub Packages](https://docs.github.com/en/packages/learn-github-packages/introduction-to-github-packages).
+Kubernetes uses this API to deploy container images. In recent years, the capabilities of OCI registries have been
+expanded from distributing runtime container images (e.g., Docker) to supporting arbitrary content. This has lead to
+many deployment tools,
+including [Helm](https://helm.sh/docs/topics/registries/), [Config Sync](https://cloud.google.com/blog/products/containers-kubernetes/gitops-with-oci-artifacts-and-config-sync), [Flux](https://fluxcd.io/flux/cheatsheets/oci-artifacts/), [timoni](https://timoni.sh/#oci-artifacts), [Crossplane](https://docs.crossplane.io/latest/packages/configurations/),
+and [Tekton](https://github.com/tektoncd/community/blob/main/teps/0005-tekton-oci-bundles.md), to leverage OCI
+registries for artifact distribution.
+
+We will adopt the OCI API to distribute xRegistry content to EDC runtimes via the EDC reconciler. This provides several
+benefits, including the ability to use existing tools and infrastructure for distributing artifacts and avoiding the
+need for an additional xRegistry server. Note that using an xRegistry API server to distribute content will still be
+possible. The advantages of using OCI registries for artifact distribution are
+explored [here](https://itnext.io/advantages-of-storing-configuration-in-container-registries-rather-than-git-b4266dc0c79f)
+and [here](https://www.bretfisher.com/oci-artifacts/).
 
 Since xRegistry defines a model for storing schemas and other definitions, it can be used to manage additional
 resources such as Verifiable Credential schemas, message schemas, and trust lists.
 
 ### Artifact Deployment Implementation
 
-The xRegistry implementation and Reconciler will be maintained in the EDC project since it is generally applicable
-to all dataspaces.
+The OCI support and a Reconciler will be maintained in the EDC project since it is generally applicable to all
+dataspaces.
 
-### xRegistry Implementation
+**File System Format**
 
-The xRegistry implementation will consist of a set of composable modules. The core modules will implement:
+To support distributing xRegistry via an OCI registry as an artifact, we will define two file-system xRegistry layouts: a full-form version and a compact format that avoids boilerplate. The xRegistry file image can be ZIPed and pushed to an OCI registry, where it is available to deployments.
 
-- Parsers for serializing and deserializing xRegistry types
-- An extensible, type system for manipulating xRegistry data and artifacts
-- An data validation system
-- Support for dataspace artifact types such as policies
-- Java-based build plugins for validating artifacts such as policies
-- An xRegistry runtime built on the EDC modularity framework
+**Governance Rules**
+
+We also introduce governance rule artifacts, which are meta-constraints for a category of policies. For example, a governance rule may be applied to policies for a particular dataspace that requires a membership credential.
+
+#### OCI Registry Support
+
+The workflow we are enabling is described in the following diagram:
+
+```mermaid
+flowchart LR
+   subgraph gitrepo [Git Repository]
+       direction LR
+       policies[Policies]
+       xregistry[xRegistry Format]
+       tools[OCI Tools]
+       policies --> xregistry
+       xregistry --> tools
+   end
+   subgraph ocireg[OCI Registry]
+       artifacts[[Artifacts]]
+   end
+   tools -- Publish --> artifacts
+   edc1[EDC Deployment]
+   edc2[EDC Deployment]
+   artifacts -- Pull --> edc1
+   artifacts -- Pull --> edc2
+   style ocireg fill: #E9EDF4, stroke: #DDDDDD, stroke-width: 1px, color: #000000
+   style gitrepo fill: #E9EDF4, stroke: #DDDDDD, stroke-width: 1px, color: #000000
+  ```
+
+In the developer-centric workflow, policies (and other content such as schemas) are authored using standard Git-aware tooling, such as an IDE. This content can be stored directly in the xRegistry file-system format or as resources elsewhere in the repository to facilitate development and testing alongside other components. If stored elsewhere, the xRegistry format can be generated during the build process. At that point, the build process can use standard OCI client tooling to create and publish the xRegistry archive to an OCI registry for deployment.    
+
+The [ORAS project](https://github.com/oras-project) implements a popular OCI client library in multiple languages. The [Java variant](https://github.com/oras-project/oras-java) has been tested using the GitHub Packages OCI-compliant registry. A Gradle plugin will be provided that embeds the ORA client and automates this process.
+
+This workflow can also be adapted to non-developer-centric workflows. For example, a GUI-based policy editor could check artifacts into a Git repository or deploy an archive directly to an OCI registry:
+
+
+```mermaid
+flowchart LR
+   subgraph gitrepo [GUI Policy Editor]
+       direction LR
+       policies[Policies]
+       tools[OCI Tools]
+       policies --> tools
+   end
+   subgraph ocireg[OCI Registry]
+       artifacts[[Artifacts]]
+   end
+   tools -- Publish --> artifacts
+   edc1[EDC Deployment]
+   edc2[EDC Deployment]
+   artifacts -- Pull --> edc1
+   artifacts -- Pull --> edc2
+   style ocireg fill: #E9EDF4, stroke: #DDDDDD, stroke-width: 1px, color: #000000
+   style gitrepo fill: #E9EDF4, stroke: #DDDDDD, stroke-width: 1px, color: #000000
+  ```
+
+It's important to note that since OCI registries are ubiquitous, no new production infrastructure is required to enable policy deployment.
+
+#### The xRegistry File System Formats
+
+The xRegistry specification envisions additional delivery mechanisms other than an API server. We define two file-system-based formats. The first specifies the following directory structure:
+
+`[root]/[group type]/[group name]/[resource name]/[resource id]/versions/[version number].[ext]`
+
+The following group types are supported
+
+- policygroups
+- schemagroups
+- rulegroups
+
+This structure is depicted for policies in the following diagram:
+
+```mermaid
+graph TD
+   A[xregistry-expanded] --> B[xregistry.json]
+   A --> C[policygroups]
+   C --> D[dspacex]
+   D --> E[meta.json]
+   D --> F[policies]
+   F --> G[generic-access]
+   G --> H[meta.json]
+   G --> I[versions]
+   I --> J[1.0.json]
+   
+```
+
+
+The above layout deploys the `generic-access` policy, version 1.0, under the `dspacex` group. The group and resource directories may contain `meta.json` documents containing additional xRegistry attributes. 
+
+The same policy may be deployed in compact form using the following structure:
+
+`[root]/policies/[file]`
+
+where `[file]` is in the following format:
+
+`[group].[resource].v[version].[ext]` 
+
+For example, `dspacex.generic-access.v1.0.json`. This is depicted as follows:
+
+```mermaid
+graph TD
+   A[xregistry-compact] --> B[policies]
+   
+   B --> E[dspacex.generic-access.v1.0.json]
+```
+
+Tooling has been developed that walks the expanded and compact directory structures, producing a `DeploymentIndex`.  The index can be used to perform validations (at build time) or create a `diff` for runtime deployment:
+
+```mermaid
+flowchart LR
+   compact[Compact Format]
+   expanded[Expanded Format]
+   cwalker[Walker]
+   dwalker[Walker]
+   visitor[Visitor]
+   index[Deployment Index]
+
+   compact --> cwalker
+   expanded --> dwalker
+   cwalker --> visitor
+   dwalker --> visitor
+   visitor --> index
+```
+
+#### Governance Rules
+
+A `Governance Rule` is a meta-constraint that is specified for a category of policies. For example:
+
+> All policies used in Dataspace-X must require a Dataspace-X Membership Credential.
+
+A governance rule is implemented as an xRegistry artifact that uses JSON Schema to define policy constraints and has an array of `appliesTo` values that specify the set of policies the rule is evaluated for. These relationships are modeled as follows:
+
+```mermaid
+classDiagram
+   class JsonSchema
+   class GovernanceRule {
+       +schemaref
+       +appliesTo
+   }
+   class Policy
+   class PolicyConstraint
+
+   JsonSchema ..> Constraint: Requires
+   GovernanceRule --> JsonSchema
+   GovernanceRule ..> Policy
+   Policy --> Constraint 
+```
+
+A `GovernanceRule` references a JSON Schema that places requirements on a policy, specifically by defining the type of policy constraints that must be satisfied. Let's take the example of the Dataspace-X Membership Credential requirement. The governance rule is defined below:
+
+```json
+{
+ "versionid": "1.0",
+ "name": "membership-requirement",
+ "description": "Requires Dataspace-X Membership Credential",
+ "appliesTo": [
+   "label:dspacex"
+ ],
+ "schemaref": "/schemagroups/dspace-x/membership/1.0"
+}
+```
+
+The `appliesTo` value specifies that the rule applies to policies with the `label:dspacex` label. We will discuss labels in more detail later. For now, it's only important to know that groups of policies can be labeled.
+
+The JSON Schema is defined as follows:
+
+```json
+{
+ "$schema": "http://json-schema.org/draft-07/schema",
+ "$description": "Requires a permission with action use have a headquarters in Europe",
+ "type": "object",
+ "properties": {
+   "policy": {
+     "type": "object",
+     "properties": {
+       "permission": {
+         "type": "array",
+         "items": {
+           "type": "object",
+           "properties": {
+             "action": {
+               "type": "string"
+             },
+             "constraint": {
+               "oneOf": [
+                 {
+                   "$ref": "#/definitions/singleConstraint"
+                 },
+                 {
+                   "type": "array",
+                   "items": {
+                     "$ref": "#/definitions/singleConstraint"
+                   }
+                 }
+               ]
+             }
+           },
+           "if": {
+             "properties": {
+               "action": {
+                 "const": "use"
+               }
+             }
+           },
+           "then": {
+             "anyOf": [
+               {
+                 "properties": {
+                   "constraint": {
+                     "allOf": [
+                       {
+                         "properties": {
+                           "leftOperand": {
+                             "const": "headquarter_location"
+                           },
+                           "rightOperand": {
+                             "const": "EU"
+                           }
+                         }
+                       }
+                     ]
+                   }
+                 }
+               },
+               {
+                 "properties": {
+                   "constraint": {
+                     "type": "array",
+                     "contains": {
+                       "properties": {
+                         "leftOperand": {
+                           "const": "membership.credential"
+                         },
+                         "rightOperand": {
+                           "const": "active"
+                         }
+                       },
+                       "required": [
+                         "leftOperand",
+                         "rightOperand"
+                       ]
+                     }
+                   }
+                 }
+               }
+             ]
+           }
+         }
+       }
+     }
+   }
+ },
+ "definitions": {
+   "singleConstraint": {
+     "type": "object",
+     "properties": {
+       "leftOperand": {
+         "type": "string"
+       },
+       "operator": {
+         "type": "string"
+       },
+       "rightOperand": {
+         "type": "string"
+       }
+     },
+     "required": [
+       "leftOperand",
+       "operator",
+       "rightOperand"
+     ]
+   }
+ }
+}
+```
+
+###### Labels
+
+The previous section introduced governance rules and the `appliesTo` attribute. Labels are taken from the xRegistry resource name. For example, a policy named `dspacex.membership.v1.0` will be labeled `dspacex`.
+
+#### Runtime Deployment
+
+xRegistry resources are published to an OCI registry. The EDC reconciler will pull the resources from the registry and deploy them to a set of EDC runtimes. xRegistry resources are published as a ZIP archive containing the xRegistry file layout.
+
+The following diagram illustrates the deployment process:
+
+```mermaid
+flowchart
+   subgraph registry[Registry]
+       rules_artifacts[[Rules Artifacts]]
+       policy_artifacts[[Policy Artifacts]]
+   end
+
+   subgraph edc[EDC]
+       direction LR
+       subgraph reconciler[Reconciler]
+           direction LR
+           subgraph validation[Validator]
+               direction LR
+               rules[[Rules]]
+           end
+           subgraph deployer[Deployer]
+               direction LR
+               policies[[Policies]]
+           end
+           validation --> deployer
+       end
+   end
+
+   rules_artifacts --> validation
+   policy_artifacts --> validation
+   style registry fill: #E9EDF4, stroke: #DDDDDD, stroke-width: 1px, color: #000000
+   style validation fill: #ffffff, stroke: #BBBBBB, stroke-width: 1px, color: #000000
+   style deployer fill: #ffffff, stroke: #BBBBBB, stroke-width: 1px, color: #000000
+   style reconciler fill: #ffffff, stroke: #DDDDDD, stroke-width: 1px, color: #000000
+   style edc fill: #E9EDF4, stroke: #DDDDDD, stroke-width: 1px, color: #000000
+```
+
+##### Rules and Policies: Separation of Concerns
+
+There is no one correct way to organize all deployments. However, it is recommended to split policies and rules into separate repositories. This allows for a clear separation of concerns. The EDC reconciler can be configured to pull rules from a repository and apply them to policies distributed in different repositories.
+
+##### Versioning
+
+Both xRegistry and OCI containers have the concept of versions. The EDC deployment algorithm is not incremental, so the entire contents of the xRegistry will be evaluated on each reconciliation cycle. This means all active artifacts (e.g., policies) must be in the OCI archive, and artifacts that are not active must be omitted. For example, consider the following deployment states where policy v1 and v2 are deployed in two cycles, and v2 is subsequently deactivated in the third cycle:
+
+| Cycle | OCI Archive Content  | Deployment State                          |
+| ----- | -------------------- | ----------------------------------------- |
+| 1     | policy v1            | policy v1 active                          |
+| 2     | policy v1, policy v2 | policy v1 active, policy v2 active        |
+| 3     | policy v2            | policy v2 active, [policy v1 deactivated] |
+
+###### Policy Deactivation
+
+Deleting a policy involved a number of considerations and is therefore not a straightforward task. If a contract agreement references a policy, the policy cannot be deleted. In addition, the reference from a contract agreement to a policy cannot be removed (for example, by "copying" the policy to the contract agreement) as it will then remove the possibility to determine which contract agreements have been created for a policy. A policy can only be deleted when there are no references to it.
+
+Deletion is further complicated in fleet deployments. A policy may be referenced in one fleet deployment and not another. If deletion were allowed, this could result in an inconsistent state across the deployments. To avoid this possibility, we introduce the concept of policy deactivation. When a policy is removed from the OCI archive, it will be deactivated. Runtimes must retain the policy if it is referenced but not allow it to be used for new contract offers. If the policy is no longer referenced, it can be garbage collected and removed.
+
+
+##### Implementation
+
+An implementation of client-side OCI tooling has been done as part of this concept. We originally implemented a full OCI artifact generator in Java but later refined it to rely on the [ORAS Library](https://oras.land/). The ORAS library has been integrated with a Gradle plugin to make deploying policy artifacts from a Git repository as part of the standard build process simple. The following is an example build extract:
+
+```kotlin
+plugins {
+   base
+   id("org.eclipse.edc.xregistry-oci-publisher") version "1.0"
+}
+
+repositories {
+   mavenCentral()
+   mavenLocal()
+}
+
+configure<XRegistryOciPublisherExtension> {
+   xRegistrySourceDir.set("src/main/xregistry")
+
+   ociArtifactName.set("ghcr.io/metaform/xr-sample")
+   ociArtifactTag.set("1.0")
+
+   // Registry authentication
+   ociRegistryUsername.set(
+       System.getenv("OCI_REGISTRY_USERNAME")
+           ?: throw GradleException("OCI_REGISTRY_USERNAME environment variable is required")
+   )
+   ociRegistryPassword.set(
+       System.getenv("OCI_REGISTRY_PASSWORD")
+           ?: throw GradleException("OCI_REGISTRY_PASSWORD environment variable is required")
+   )
+
+   // Custom manifest annotations
+   manifestAnnotations.set(
+       mapOf(
+           "org.opencontainers.image.title" to "xRegistry Policy Bundle",
+           "org.opencontainers.image.description" to "Fleet management policies",
+           "org.opencontainers.image.version" to project.version.toString(),
+           "org.opencontainers.image.created" to Instant.now().toString(),
+           "org.opencontainers.image.authors" to "ACME, Inc."
+       )
+   )
+}
+```
+
+Standard ORAS tooling can be used in place of the Gradle plugin, opening the possibility of deploying artifacts as part of GitHub actions, CI pipelines, and non-Java build systems.
+
+In addition, a file system processor for xRegistry files has been completed. The reconciler component will use the processor to parse xRegistry OCI artifacts and apply them at runtime. Integration with the reconciler will be done in the next project phase.
 
 ### Reconciler Implementation
 

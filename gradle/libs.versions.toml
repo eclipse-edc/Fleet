@@ -15,8 +15,12 @@ postgres = "42.7.5"
 restAssured = "5.5.0"
 swagger = "2.2.28"
 rsApi = "4.0.0"
-testcontainers = "1.20.3"
+testcontainers = "1.21.3"
 slf4j = "2.0.16"
+jetbrainsAnnotation = "26.0.2-1"
+oras-java-sdk = "0.2.15"
+junit-jupiter = "5.9.2"
+
 
 [libraries]
 
@@ -86,20 +90,31 @@ assertj = { module = "org.assertj:assertj-core", version.ref = "assertj" }
 awaitility = { module = "org.awaitility:awaitility", version.ref = "awaitility" }
 jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
 jakarta-rsApi = { module = "jakarta.ws.rs:jakarta.ws.rs-api", version.ref = "rsApi" }
+assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }
 junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "jupiter" }
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit-jupiter" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
 mockserver-netty = { module = "org.mock-server:mockserver-netty", version.ref = "mockserver" }
 nimbus-jwt = { module = "com.nimbusds:nimbus-jose-jwt", version.ref = "nimbus" }
 postgres = { module = "org.postgresql:postgresql", version.ref = "postgres" }
 restAssured = { module = "io.rest-assured:rest-assured", version.ref = "restAssured" }
 swagger-jaxrs = { module = "io.swagger.core.v3:swagger-jaxrs2-jakarta", version.ref = "swagger" }
+testcontainers-bom = { module = "org.testcontainers:testcontainers-bom", version.ref = "testcontainers" }
+testcontainers = { module = "org.testcontainers:testcontainers" }
 testcontainers-junit = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
 testcontainers-postgres = { module = "org.testcontainers:postgresql", version.ref = "testcontainers" }
+testcontainers-junit-jupiter = { module = "org.testcontainers:junit-jupiter" }
 jakarta-annotation = { module = "jakarta.annotation:jakarta.annotation-api", version.ref = "jakarta-annotation" }
+jetbrains-annotations = { module = "org.jetbrains:annotations", version.ref = "jetbrainsAnnotation" }
 jersey-common = { module = "org.glassfish.jersey.core:jersey-common", version.ref = "jersey" }
 slf4j-noop = {module = "org.slf4j:slf4j-nop", version.ref="slf4j"}
+oras-java-sdk = { module = "land.oras:oras-java-sdk", version.ref = "oras-java-sdk" }
+
 
 [bundles]
+testing = ["junit-jupiter", "assertj-core", "junit-platform-launcher"]
 base-runtime = ["edc-boot", "edc-core-connector", "edc-http", "edc-observability", "slf4j-noop"]
+testcontainers = ["testcontainers", "testcontainers-junit-jupiter"]
 
 [plugins]
 shadow = { id = "com.gradleup.shadow", version = "8.3.6" }

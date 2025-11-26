@@ -1,0 +1,12 @@
+{
+  "policyid": "generic.access",
+  "self": "https://localhost:8080/xregistry/policygroups/dspacex/policies/generic.access",
+  "xid": "/policygroups/dspacex/policies/generic.access",
+  "metaurl": "https://localhost:8080/xregistry/policygroups/dspacex/policies/generic.access/meta",
+  "versionsurl": "https://localhost:8080/xregistry/policygroups/dspacex/policies/generic.access/versions",
+  "versionscount": 1,
+  "description": "Asserts membership in Dataspace-X",
+  "epoch": 1,
+  "createdat": "2024-12-19T06:00:00Z",
+  "modifiedat": "2024-12-19T06:00:00Z"
+}
